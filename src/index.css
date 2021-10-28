@@ -1,0 +1,22 @@
+@font-face {
+  font-family: Akkurat-Mono;
+  src: url('./fonts/Akkurat-Mono/Akkurat-Mono.OTF');
+}
+
+@font-face {
+  font-family: StyreneAWeb;
+  src: url('./fonts/StyreneAWeb/StyreneAWeb-Medium.ttf');
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Akkurat-Mono;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  cursor: none;
+}
