@@ -35,7 +35,6 @@ const Cursor = () => {
 export default Cursor
 
 const CursorPointer = styled.div`
-
     width: 30px;
     height: 30px;
     border: 2px solid #7A7A7A;

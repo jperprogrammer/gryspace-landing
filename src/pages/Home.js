@@ -15,111 +15,148 @@ import image9 from '../images/9.png'
 import image10 from '../images/10.png'
 import image11 from '../images/11.png'
 
-const style = {
-    bgLayerStyle: {
-        position: 'absolute',
-        height: '100%',
-        transform: 'translate(-15%, 17%)',
-      }
-}
-
 const Home = () => {
-    const imageSrc = [
+    const imageData = [
         {
             "url": image1,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image2,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image3,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image4,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image5,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image6,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image7,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image8,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image9,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image10,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
         {
             "url": image11,
-            "dimensions": {
-                "width": 1368,
-                "height": 1710
-            },
             "alt": null
         },
     ]
 
     const imageRef = useRef(null)
+    const canvasRef = useRef(null)
+    let w =0
+    let h = 0
+    let randX = 0
+    let randY = 0
+    let mouseX = 0 
+    let mouseY = 0
+    let canvas
+    let context
+    let canvasImagesParam = []
+    let x = 0
+    let y = 0
 
     useEffect(() => {
-        
+        canvas = canvasRef.current
+        context = canvas.getContext('2d')
+        context.canvas.width = window.innerWidth
+        context.canvas.height = window.innerHeight
+        canvas.onmousemove = handleMouseMove 
+
+        imageData.forEach(i =>  {
+            const image = new Image()
+            image.src = i.url
+            const imageW = image.width
+            const imageH = image.height
+            image.backroundSize = "cover"
+
+            //set image width and height by dimension
+            if (imageW > imageH) {
+                w = Math.floor(Math.random() * 100) + 200
+                h = Math.floor(Math.random() * 50) + 150 
+            } else {
+                w = Math.floor(Math.random() * 50) + 150
+                h = Math.floor(Math.random() * 100) + 200 
+            }
+
+            //set image position x, y
+            randX = Math.floor(Math.random() * window.innerWidth) + 0
+            randY = Math.floor(Math.random() * window.innerHeight ) + 0
+            
+            //image param
+            canvasImagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h})          
+        })   
+
+        //Init images gallery
+        canvasImagesParam.forEach(img => {
+            img.image.onload = () => {
+                context.drawImage(img.image, img.imageX, img.imageY, img.w, img.h)
+            }
+        })        
+
+        // return () => {
+        //     cancelAnimationFrame(animate)
+        // }        
     }, [])
+
+    const handleMouseMove = (e) => {   
+        const animate = () => {
+            requestAnimationFrame(animate)
+            context.clearRect(0, 0, canvas.width, canvas.height)
+            
+            canvasImagesParam.forEach(img => {
+                mouseX = (e.clientX -img.imageX) / 10 + img.imageX
+                mouseY = (e.clientY -img.imageY) / 10 + img.imageY 
+                if(mouseX > img.imageX) {
+                    mouseX -= 0.01
+                    if(mouseX < img.imageX) {
+                        mouseX = img.imageX
+                    }
+                }else {
+                    mouseX += 0.01
+                    if(mouseX > img.imageX) {
+                        mouseX = img.imageX
+                    }
+                }
+
+                if(mouseY > img.imageY) {
+                    mouseY -= 0.01
+                    if(mouseY < img.imageY) {
+                        mouseY = img.imageY
+                    }
+                }else {
+                    mouseY += 0.01
+                    if(mouseY > img.imageY) {
+                        mouseY = img.imageY
+                    }
+                }
+                context.drawImage(img.image, mouseX, mouseY, img.w, img.h)
+            })
+        }
+
+        animate()
+    }
 
     return (
         <Main>
@@ -136,8 +173,7 @@ const Home = () => {
                     </ul>
                 </Filter>
             </Header>
-            <MainContainer ref={imageRef}>                
-            </MainContainer>
+            <canvas ref={canvasRef} />             
             <Footer />
         </Main>
     )
@@ -154,38 +190,33 @@ const Main = styled.div`
 `;
 
 const Header = styled.div`
-    position: relative;
     display: flex;
     align-items: center;
+    position: fixed;
+    width: 100%;
 `;
 
 const Logo = styled.p`
-    flex: 1;
     font-family: StyreneAWeb;
     font-size: 25px;
     margin-left: 50px;
+    margin-bottom: 60px;
+    margin-right: 200px;
+    @media screen and (max-width: 768px) {
+        margin-right: 5px;
+    }
 `;
 
 const Filter = styled.div`
     display: flex;
-    flex: 3;
     flex-direction: row;
     font-size: 15px;
-    margin-top: 50px;
+    padding-top: 30px;
     ul {
         list-style-type: none;
     }
 `;
 
-const MainContainer = styled.div`
-
-`;
-
-const ImageContainer = styled.img`
-    width: 15%;
-    height: 15%;
-    opacity: 0.8;
-`;
 
 
 
