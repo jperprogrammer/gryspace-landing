@@ -67,7 +67,7 @@ const Home = () => {
     let context
     let camera
     let imagesParam = []
-    let w, h, randX, randY
+    let w, h, randX, randY, mouseX, mouseY
 
     useEffect(() => {
         canvas = canvasRef.current
@@ -106,15 +106,34 @@ const Home = () => {
             imagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h})          
         })      
 
-        const animate = () => {
+        const FRAMES_PER_SECOND = 60;  // Valid values are 60,30,20,15,10
+        // set the mim time to render the next frame
+        const FRAME_MIN_TIME = (1000/60) * (60 / FRAMES_PER_SECOND) - (1000/60) * 0.5;
+        let lastFrameTime = 0;  // the last frame time
+
+        const animate = (time) => {
             draw(imagesParam)
-            requestAnimationFrame(animate)
+            if(time-lastFrameTime < FRAME_MIN_TIME){ //skip the frame if the call is to early
+                window.requestAnimFrame(animate);
+                return; // return as there is nothing to do
+            }
+            lastFrameTime = time; // remember the time of the rendered frame
+            // render the frame
+            window.requestAnimFrame(animate);
         }
         animate()
     }, [])
 
+    window.requestAnimFrame = (function () {
+        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+    })();
+
     const handleMouseMove = (e) => {
-        moveCamera(e.offsetX, e.offsetY)
+        mouseX = e.offsetX
+        mouseY = e.offsetY
+        moveCamera(mouseX, mouseY)
     }
 
     const moveCamera = (posX, posY) => {
@@ -124,15 +143,17 @@ const Home = () => {
     }
 
     const moveContext = () => {
-        context.beginPath();
-        context.globalAlpha = 1;
+        context.save()
         context.setTransform(1, 0, 0, 1, 0, 0); // Reset context
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.translate(
-            (canvas.width / 5-camera.x + camera.width / 5) * .4,
-            (canvas.height / 5-camera.y + camera.height / 5) * .4
+            (canvas.width / 5 - camera.x + camera.width / 5) * .4,
+            (canvas.height / 5 - camera.y + camera.height / 5) * .4
         );
     }
+
+    let scale=1.00;
+    let scaleDirection=0.01;
 
     const draw = (imagesParam) => {
         imagesParam.forEach(iParam => {
@@ -144,8 +165,23 @@ const Home = () => {
       	// Draw viewport background
         context.clearRect(0, 0, canvas.width, canvas.height);
         imagesParam.forEach(iParam => {
-            context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+            if(checkDistance(mouseX, iParam.imageX, mouseY, iParam.imageY, iParam.w, iParam.h)) {                
+                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+            } else {
+                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+            }
         })
+    }
+
+    const checkDistance = (mousePosX, imagePosX, mousePosY, imagePosY, iw, ih) => {
+        let distanceX = Math.abs(mousePosX - (imagePosX + iw / 2))
+        let distanceY = Math.abs(mousePosY - (imagePosY + ih / 2))
+        let distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY)
+        if(distance < iw  || distance < ih ) {
+            return true
+        } else {
+            return false
+        }
     }
 
     return (
