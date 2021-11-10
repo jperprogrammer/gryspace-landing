@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import Footer from '../components/Footer'
-import ParallaxMousemove from 'react-parallax-mousemove';
 
 import image1 from '../images/1.png'
 import image2 from '../images/2.png'
@@ -63,27 +62,26 @@ const Home = () => {
         },
     ]
 
-    const imageRef = useRef(null)
     const canvasRef = useRef(null)
-    let w =0
-    let h = 0
-    let randX = 0
-    let randY = 0
-    let mouseX = 0 
-    let mouseY = 0
     let canvas
     let context
-    let canvasImagesParam = []
-    let x = 0
-    let y = 0
+    let camera
+    let imagesParam = []
+    let w, h, randX, randY
 
     useEffect(() => {
         canvas = canvasRef.current
         context = canvas.getContext('2d')
-        context.canvas.width = window.innerWidth
-        context.canvas.height = window.innerHeight
-        canvas.onmousemove = handleMouseMove 
-
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight 
+        canvas.onmousemove = handleMouseMove
+        camera = {
+            width: .5 * window.innerWidth,
+            height: .5 * window.innerHeight,
+            x: .5 * window.innerWidth / 2,
+            y: .5 * window.innerHeight / 2,
+        }
+        
         imageData.forEach(i =>  {
             const image = new Image()
             image.src = i.url
@@ -105,57 +103,49 @@ const Home = () => {
             randY = Math.floor(Math.random() * window.innerHeight ) + 0
             
             //image param
-            canvasImagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h})          
-        })   
+            imagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h})          
+        })      
 
-        //Init images gallery
-        canvasImagesParam.forEach(img => {
-            img.image.onload = () => {
-                context.drawImage(img.image, img.imageX, img.imageY, img.w, img.h)
-            }
-        })        
-
-        // return () => {
-        //     cancelAnimationFrame(animate)
-        // }        
+        const animate = () => {
+            draw(imagesParam)
+            requestAnimationFrame(animate)
+        }
+        animate()
     }, [])
 
-    const handleMouseMove = (e) => {   
-        const animate = () => {
-            requestAnimationFrame(animate)
-            context.clearRect(0, 0, canvas.width, canvas.height)
-            
-            canvasImagesParam.forEach(img => {
-                mouseX = (e.clientX -img.imageX) / 10 + img.imageX
-                mouseY = (e.clientY -img.imageY) / 10 + img.imageY 
-                if(mouseX > img.imageX) {
-                    mouseX -= 0.01
-                    if(mouseX < img.imageX) {
-                        mouseX = img.imageX
-                    }
-                }else {
-                    mouseX += 0.01
-                    if(mouseX > img.imageX) {
-                        mouseX = img.imageX
-                    }
-                }
+    const handleMouseMove = (e) => {
+        moveCamera(e.offsetX, e.offsetY)
+    }
 
-                if(mouseY > img.imageY) {
-                    mouseY -= 0.01
-                    if(mouseY < img.imageY) {
-                        mouseY = img.imageY
-                    }
-                }else {
-                    mouseY += 0.01
-                    if(mouseY > img.imageY) {
-                        mouseY = img.imageY
-                    }
-                }
-                context.drawImage(img.image, mouseX, mouseY, img.w, img.h)
-            })
-        }
+    const moveCamera = (posX, posY) => {
+        camera.x = posX
+        camera.y = posY
+        moveContext()
+    }
 
-        animate()
+    const moveContext = () => {
+        context.beginPath();
+        context.globalAlpha = 1;
+        context.setTransform(1, 0, 0, 1, 0, 0); // Reset context
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.translate(
+            (canvas.width / 5-camera.x + camera.width / 5) * .4,
+            (canvas.height / 5-camera.y + camera.height / 5) * .4
+        );
+    }
+
+    const draw = (imagesParam) => {
+        imagesParam.forEach(iParam => {
+            iParam.onload = () => {
+                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+            }
+        })
+		
+      	// Draw viewport background
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        imagesParam.forEach(iParam => {
+            context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+        })
     }
 
     return (
