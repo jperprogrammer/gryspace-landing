@@ -18,55 +18,60 @@ const Home = () => {
     const imageData = [
         {
             "url": image1,
-            "alt": null
+            "alt": "Fashion"
         },
         {
             "url": image2,
-            "alt": null
+            "alt": "Horse"
         },
         {
             "url": image3,
-            "alt": null
+            "alt": "Fashion"
         },
         {
             "url": image4,
-            "alt": null
+            "alt": "Sports"
         },
         {
             "url": image5,
-            "alt": null
+            "alt": "Animal"
         },
         {
             "url": image6,
-            "alt": null
+            "alt": "Hotel"
         },
         {
             "url": image7,
-            "alt": null
+            "alt": "House"
         },
         {
             "url": image8,
-            "alt": null
+            "alt": "River"
         },
         {
             "url": image9,
-            "alt": null
+            "alt": "Mountain"
         },
         {
             "url": image10,
-            "alt": null
+            "alt": "Sea"
         },
         {
             "url": image11,
-            "alt": null
+            "alt": "Fashion"
         },
     ]
 
     const canvasRef = useRef(null)
+    let init = true
     let canvas
     let context
     let imagesParam = []
-    let w, h, randX, randY
+    let w, h, randX, randY, mouseClientX, mouseClientY
+    let scaleDirection = 0.05
+    var time = 0;
+    var timeMax = 400;
+    var fTime = 0;
 
     let mouse = {
         x : window.innerWidth / 2,
@@ -94,6 +99,7 @@ const Home = () => {
             const imageW = image.width
             const imageH = image.height
             image.backroundSize = "cover"
+            image.opacity = 0.8
 
             //set image width and height by dimension
             if (imageW > imageH) {
@@ -109,8 +115,8 @@ const Home = () => {
             randY = Math.floor(Math.random() * window.innerHeight ) + 0
             
             //image param
-            imagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h})          
-        })      
+            imagesParam.push({"image": image, "imageX": randX, "imageY": randY, "w": w, "h": h, "scale": 1, "alt": i.alt})          
+        })     
 
         let displayTransform = {
             x:0,
@@ -139,8 +145,8 @@ const Home = () => {
             mouseY:0,
             ctx:context,
             setTransform:function(){
-                var m = this.matrix;
-                var i = 0;
+                let m = this.matrix;
+                let i = 0;
                 this.ctx.setTransform(m[i++],m[i++],m[i++],m[i++],m[i++],m[i++])
             },
             setHome:function(){
@@ -183,7 +189,7 @@ const Home = () => {
         
         
                 // create invers matrix
-                var det = (this.matrix[0] * this.matrix[3] - this.matrix[1] * this.matrix[2])
+                let det = (this.matrix[0] * this.matrix[3] - this.matrix[1] * this.matrix[2])
                 this.invMatrix[0] = this.matrix[3] / det
                 this.invMatrix[1] =  - this.matrix[1] / det
                 this.invMatrix[2] =  - this.matrix[2] / det
@@ -192,11 +198,11 @@ const Home = () => {
                 // check for mouse. Do controls and get real position of mouse.
                 if(mouse !== undefined){  // if there is a mouse get the real cavas coordinates of the mouse
                     if(mouse.oldX !== undefined){ // check if panning (middle button)
-                        var mdx = mouse.x-mouse.oldX // get the mouse movement
-                        var mdy = mouse.y-mouse.oldY
+                        let mdx = mouse.x-mouse.oldX // get the mouse movement
+                        let mdy = mouse.y-mouse.oldY
                         // get the movement in real space
-                        var mrx = (mdx * this.invMatrix[0] + mdy * this.invMatrix[2])
-                        var mry = (mdx * this.invMatrix[1] + mdy * this.invMatrix[3])  
+                        let mrx = (mdx * this.invMatrix[0] + mdy * this.invMatrix[2])
+                        let mry = (mdx * this.invMatrix[1] + mdy * this.invMatrix[3])  
                         this.x += mrx / 2
                         this.y += mry / 2
                     }
@@ -233,8 +239,8 @@ const Home = () => {
         
                     }
                     // get the real mouse position 
-                    var screenX = (mouse.x - this.cox)
-                    var screenY = (mouse.y - this.coy)
+                    let screenX = (mouse.x - this.cox)
+                    let screenY = (mouse.y - this.coy)
                     this.mouseX = this.cx + (screenX * this.invMatrix[0] + screenY * this.invMatrix[2])
                     this.mouseY = this.cy + (screenX * this.invMatrix[1] + screenY * this.invMatrix[3])            
                     mouse.rx = this.mouseX  // add the coordinates to the mouse. r is for real
@@ -255,7 +261,8 @@ const Home = () => {
             displayTransform.setHome()
             context.clearRect(0, 0 ,canvas.width, canvas.height)
             displayTransform.setTransform()
-            draw(imagesParam)
+            context.globalAlpha = 0.9
+            draw(imagesParam)            
 
             requestAnimationFrame(animate)
         }
@@ -265,26 +272,32 @@ const Home = () => {
     const handleMouseMove = (e) => {
         mouse.x = e.offsetX
         mouse.y = e.offsetY
+        mouseClientX = e.clientX
+        mouseClientY = e.clientY
         if (mouse.x === undefined) {
             mouse.x = e.clientX;
             mouse.y = e.clientY;
         }
     }
 
+    
     const draw = (imagesParam) => {
-        imagesParam.forEach(iParam => {
-            iParam.onload = () => {
-                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
-            }
-        })
-		
       	// Draw viewport background
         context.clearRect(0, 0, canvas.width, canvas.height)
         imagesParam.forEach(iParam => {
-            if(checkDistance(mouse.x, iParam.imageX, mouse.y, iParam.imageY, iParam.w, iParam.h)) {                
-                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w * 2, iParam.h * 2)
+            if(checkDistance(mouseClientX, iParam.imageX, mouseClientY, iParam.imageY, iParam.w, iParam.h)) { 
+                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w * iParam.scale, iParam.h * iParam.scale)
+                // context.font = "25px Akkurat-Mono"
+                // context.fillStyle = "white"
+                // context.fillText(iParam.alt, mouse.x, mouse.y)
+                if(iParam.scale < 2) {
+                    iParam.scale += scaleDirection
+                } 
             } else {
-                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w, iParam.h)
+                context.drawImage(iParam.image, iParam.imageX, iParam.imageY, iParam.w * iParam.scale, iParam.h * iParam.scale)
+                if(iParam.scale > 1) {
+                    iParam.scale -= scaleDirection
+                } 
             }
         })
     }
@@ -293,7 +306,7 @@ const Home = () => {
         let distanceX = Math.abs(mousePosX - (imagePosX + iw / 2))
         let distanceY = Math.abs(mousePosY - (imagePosY + ih / 2))
         let distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY)
-        if(distance < iw  || distance < ih ) {
+        if(distance < Math.sqrt(iw * iw + ih * ih)  || distance < iw) {
             return true
         } else {
             return false
